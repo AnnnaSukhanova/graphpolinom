@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Plain/Plane.iml" filepath="$PROJECT_DIR$/Plain/Plane.iml" />
+      <module fileurl="file://$PROJECT_DIR$/graphpolinom.iml" filepath="$PROJECT_DIR$/graphpolinom.iml" />
+    </modules>
+  </component>
+</project>
