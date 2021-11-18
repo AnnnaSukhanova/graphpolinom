@@ -1,122 +1,175 @@
 package ru.annnn.ui.polinom
 
+import java.lang.StringBuilder
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.pow
 
+open class Polynomial(coeff: Collection<Double>) {
 
-open class Polynomial(coef: DoubleArray) : Comparable<Polynomial> {
+    infix fun Double.eq(other: Double) =
+        abs(this - other) < max(Math.ulp(this), Math.ulp(other)) * 2
+    infix fun Double.neq(other: Double) =
+        abs(this - other) > max(Math.ulp(this), Math.ulp(other)) * 2
+    infix fun Double.ge(other: Double) =
+        this > other || this.eq(other)
+    infix fun Double.le(other: Double) =
+        this < other || this.eq(other)
 
-    protected var coef: DoubleArray = coef.clone() //коэффициенты полинома
+    var variableName: String = "x"
 
-    val coeffitients: DoubleArray
-        get() = coef.clone()
+    private val _coeff: MutableList<Double> = mutableListOf()
 
-    val power: Int //степень полинома
-        get() = coef.size - 1
+    var coeff: List<Double>
+        get() = _coeff.toList()
+        set(value) {
+            _coeff.clear()
+            _coeff.addAll(value)
+        }
+
+    val degree: Int
+        get() = _coeff.size - 1
 
     init {
-        correctPower()
+        this._coeff.addAll(coeff)
+        removeZeros()
     }
+    constructor() : this(listOf(0.0))
 
-    constructor() : this(doubleArrayOf(0.0)) //конструктор для создания полинома 0 степени
+    constructor(c: Array<Double>) : this(c.toList())
 
-    private fun correctPower() { //удаление 0 коеф при старших степенях
 
-        var b = true
-        coef = coef.reversed().filterIndexed { i, v ->
-            if (v.compareTo(0.0) != 0) b = false
-            !b || (i == power)
-        }.reversed().toDoubleArray()
+    constructor(vararg c: Double) : this(c.toList())
 
-    }
 
-    operator fun plus(other: Polynomial) = //сложение 2 полиномов
-        Polynomial(DoubleArray(max(power, other.power) + 1) {
-            (if (it < coef.size) coef[it] else 0.0) +
-                    (if (it < other.coef.size) other.coef[it] else 0.0)
+    private fun removeZeros() {
+        var found = false
+        _coeff.indices.reversed().forEach {
+            if (_coeff[it] neq 0.0) found = true
+            else if (!found) _coeff.removeAt(it)
         }
+        if (_coeff.size == 0) _coeff.add(0.0)
+    }
+    fun diff():MutableList<Double>{
+        var DiffCoef:MutableList<Double> = mutableListOf()
+        for (i in 0..coeff.size-2){
+            DiffCoef.add(_coeff[i]*(coeff.size-1-i))
+        }
+        return DiffCoef
+    }
+    override fun toString() =
+        coeff.indices.reversed().joinToString(""){ ind ->
+            val monStr = StringBuilder()
+            val acoeff = abs(coeff[ind])
+            if (coeff[ind] neq 0.0){
+                if (ind < coeff.size - 1 && coeff[ind] > 0){
+                    monStr.append("+")
+                } else if (coeff[ind] < 0) monStr.append("-")
+                if (acoeff neq 1.0)
+                    if (abs(acoeff - acoeff.toInt().toDouble()) eq 0.0)
+                        monStr.append(acoeff.toInt())
+                    else monStr.append(acoeff)
+                if (ind > 0) {
+                    monStr.append("x")
+                    if (ind > 1) monStr.append("^$ind")
+                }
+            } else {
+                if (coeff.size == 1) monStr.append("0")
+            }
+            monStr
+        }
+    operator fun invoke(x: Double): Double{
+        var p = 1.0
+        return _coeff.reduce { res, d -> p *= x; res + d * p }
+    }
+    operator fun plus(other: Polynomial) =
+        Polynomial(Array<Double>(max(degree, other.degree)+1)
+        {
+            (if (it <= degree) _coeff[it] else 0.0) +
+                    if (it <= other.degree) other._coeff[it] else 0.0
+        })
+
+    operator fun plus(value: Double)  =
+        Polynomial(
+            Array<Double>(degree+1){ _coeff[it] + if (it == 0) value else 0.0}
         )
 
-    operator fun times(other: Polynomial): Polynomial { //умножение
-        //Создание массива коэффициентов нового полинома
-        val t = DoubleArray(power + other.power + 1) { 0.0 }
-        //Для каждого коэффициента первого полинома и
-        coef.forEachIndexed { ti, tc ->
-            //коэффициента второго полинома
-            other.coef.forEachIndexed { oi, oc ->
-                t[ti + oi] += tc * oc
+    operator fun plusAssign(other: Polynomial){
+        for(i in 0..degree){
+            _coeff[i] += if (i <= other.degree) other._coeff[i] else 0.0
+        }
+        for (i in degree+1..other.degree){
+            _coeff.add(other._coeff[i])
+        }
+        removeZeros()
+    }
+
+    operator fun plusAssign(value: Double){
+        _coeff[0] += value
+    }
+
+    operator fun minus(other: Polynomial) = this + other * -1.0
+
+    operator fun minus(value: Double) = this + value * -1.0
+
+    operator fun unaryMinus() = Polynomial(Array<Double>(degree){_coeff[it]*(-1.0)})
+
+
+    operator fun minusAssign(other: Polynomial){
+        this.plusAssign(-other)
+    }
+
+    operator fun minusAssign(value: Double){
+        this.plusAssign(-value)
+    }
+
+    operator fun times(value: Double) =
+        Polynomial(Array<Double>(degree + 1){_coeff[it] * value})
+
+
+    operator fun timesAssign(value: Double){
+        for(i in 0..degree){
+            _coeff[i] *= value
+        }
+        removeZeros()
+    }
+
+    operator fun times(other: Polynomial) : Polynomial{
+        val asl = Array<Double>(degree + other.degree +1){0.0}
+        for (i in 0..degree){
+            for (j in 0..other.degree){
+                asl[i+j] += _coeff[i] * other._coeff[j]
             }
         }
-        // Создание нового полинома по рассчитанным коэффициентам
-        return Polynomial(t)
+        return  Polynomial(asl)
     }
 
-    operator fun times(k: Double) = //произведение полинома на число
-        Polynomial(DoubleArray(power + 1) { coef[it] * k })
-
-
-    operator fun minus(other: Polynomial) = //разность полиномов
-        this + other * -1.0
-
-
-    operator fun plusAssign(other: Polynomial) {
-        coef = DoubleArray(max(power, other.power) + 1) {
-            (if (it < coef.size) coef[it] else 0.0) +
-                    (if (it < other.coef.size) other.coef[it] else 0.0)
-        }
-    }
-
-
-    operator fun div(k: Double): Polynomial? { //деление полинома на число
-        return times(1 / k)
-    }
-
-    override fun toString(): String {
-        val out = StringBuilder()
-        coef.reversed().forEachIndexed { i, v ->
-            val j = power - i //Reversed indexes
-            if (v != 0.0 || power == 0) {
-                if (j == power) out.append(if (v >= 0.0) "" else "-")
-                else out.append(if (v >= 0) "+ " else "- ")
-                if (abs(v) != 1.0 || j == 0) out.append(if ((v.toLong() - v) != 0.0) abs(v) else abs(v.toLong()))
-                if (j != 0) out.append("x")
-                if (j > 1) out.append("^($j)")
-                out.append(" ")
+    operator fun timesAssign(other: Polynomial){
+        val asl = DoubleArray(degree + other.degree +1){0.0}
+        for (i in 0..degree){
+            for (j in 0..other.degree){
+                asl[i+j] += _coeff[i] * other._coeff[j]
             }
         }
-        return out.toString()
+        _coeff.clear()
+        _coeff.addAll(asl.toMutableList())
+        removeZeros()
     }
 
-    operator fun invoke(x: Double): Double {
-        return coef.mapIndexed() { i, v -> v * x.pow(i) }.sum()
 
-    }
+    operator fun div(value: Double) =
+        Polynomial(List(degree + 1){_coeff[it] / value})
 
-    override fun compareTo(other: Polynomial): Int { //сравнение 2 полиномов
-        when {
-            coef.size > other.coef.size -> {
-                return 1
-            }
-            coef.size < other.coef.size -> {
-                return -1
-            }
-            else -> {
-                for (i in coef.indices) {
-                    if (coef[i] > other.coef[i]) return 1
-                    if (coef[i] < other.coef[i]) return -1
-                }
-            }
+    operator fun divAssign(value: Double){
+        for(i in 0..degree){
+            _coeff[i] /= value
         }
-        return 0
+        removeZeros()
     }
 
-    fun derivative(): Polynomial { //производная
-        val cfs = DoubleArray(coef.size-1)
-        coef.forEachIndexed{i, x ->
-            if (i != 0) cfs[i - 1] = x * i
-        }
-        return Polynomial(cfs)
-    }
+
+    override operator fun equals (other: Any?) =
+        (other is Polynomial) && (_coeff == other._coeff)   // умное  приведение типа
+
+    override fun hashCode() = _coeff.hashCode()
 
 }
