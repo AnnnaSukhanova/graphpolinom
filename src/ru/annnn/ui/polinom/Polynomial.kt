@@ -10,12 +10,7 @@ open class Polynomial(coeff: Collection<Double>) {
         abs(this - other) < max(Math.ulp(this), Math.ulp(other)) * 2
     infix fun Double.neq(other: Double) =
         abs(this - other) > max(Math.ulp(this), Math.ulp(other)) * 2
-    infix fun Double.ge(other: Double) =
-        this > other || this.eq(other)
-    infix fun Double.le(other: Double) =
-        this < other || this.eq(other)
 
-    var variableName: String = "x"
 
     private val _coeff: MutableList<Double> = mutableListOf()
 
@@ -77,6 +72,7 @@ open class Polynomial(coeff: Collection<Double>) {
             }
             monStr
         }
+
     operator fun invoke(x: Double): Double{
         var p = 1.0
         return _coeff.reduce { res, d -> p *= x; res + d * p }
@@ -165,7 +161,6 @@ open class Polynomial(coeff: Collection<Double>) {
         }
         removeZeros()
     }
-
 
     override operator fun equals (other: Any?) =
         (other is Polynomial) && (_coeff == other._coeff)   // умное  приведение типа

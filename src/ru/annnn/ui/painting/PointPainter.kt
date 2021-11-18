@@ -1,18 +1,17 @@
 package ru.annnn.ui.painting
-import Plane
+
 import java.awt.*
+import Plane
 
-open class FunctionPainter(
-    val plane: Plane,
-    ) : Painter {
+class PointPainter(public val plane: Plane) : Painter {
 
-    var funColor: Color = Color.BLUE
-
-    lateinit var function: (Double)->Double
+    var pointColor: Color = Color.RED
+    var point = mutableMapOf<Double,Double>()
 
     override fun paint(g: Graphics){
         with(g as Graphics2D) {
-            color = funColor
+            color = pointColor
+            var radius = 6
             stroke = BasicStroke(4F, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
             val rh = mapOf(
                 RenderingHints.KEY_ANTIALIASING to RenderingHints.VALUE_ANTIALIAS_ON,
@@ -21,16 +20,9 @@ open class FunctionPainter(
                 RenderingHints.KEY_DITHERING to RenderingHints.VALUE_DITHER_ENABLE
             )
             setRenderingHints(rh)
-            if(::function.isInitialized) {
-                with(plane) {
-                    for (i in 0 until width) {
-                        drawLine(
-                            i,
-                            yCrt2Scr(function(xScr2Crt(i))),
-                            i + 1,
-                            yCrt2Scr(function(xScr2Crt(i + 1))),
-                        )
-                    }
+            with(plane) {
+                for(i in 0..point.size-1){
+                    fillOval(xCrt2Scr( point.keys.elementAt(i))-radius,plane.yCrt2Scr(point.values.elementAt(i))-radius,radius*2,radius*2)
                 }
             }
         }

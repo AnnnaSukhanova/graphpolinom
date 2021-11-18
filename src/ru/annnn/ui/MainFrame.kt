@@ -9,7 +9,11 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 import Plane
+import ru.annnn.ui.polinom.NewtonPolynomial
+import ru.annnn.ui.polinom.Polynomial
 import ru.annnn.ui.painting.FunctionPainter
+import ru.annnn.ui.painting.PointPainter
+
 
 class MainFrame  : JFrame() {
 
@@ -55,39 +59,101 @@ class MainFrame  : JFrame() {
         yMax= JSpinner(yMaxM)
 
         val mainPlane= Plane(xMinM.value as Double,yMinM.value as Double,xMaxM.value as Double,yMaxM.value as Double)
-        val cartesianPainter= CartesianPainter(mainPlane)
-        var functionPainter = FunctionPainter(mainPlane) // Объект для отрисоки полиномов
-        val derFunctionPainter = FunctionPainter(mainPlane)
+
+        var k = 0
+        val cartesianPainter = CartesianPainter(mainPlane)
+        var functionPainter = FunctionPainter(mainPlane)
+        var derFunctionPainter = FunctionPainter(mainPlane)
+        var pointPainter= PointPainter(mainPlane)
         val painters = mutableListOf<Painter>(cartesianPainter)
+        derFunctionPainter.funColor = Color.GREEN
+        lateinit var Pol:NewtonPolynomial
         mainPanel=GraphicsPanel(painters).apply {
             background=Color.WHITE
         }
 
         checkboxPoint= JCheckBox()
+        checkboxPoint.isSelected = true
         checkboxGraphics= JCheckBox()
+        checkboxGraphics.isSelected = true
         checkboxDerivative= JCheckBox()
+        checkboxDerivative.isSelected = true
 
         mainPanel.addMouseListener(object : MouseAdapter(){
-            override fun mouseClicked(e: MouseEvent?) {
-                super.mouseClicked(e)
-                if (e?.button == MouseEvent.BUTTON1) { // Если нажата левая кнопка мыши
-                    if(painters.size == 1){
-                        functionPainter = FunctionPainter(mainPlane)
+            override fun mouseClicked(e: MouseEvent?)
+            {
+                if(e?.point != null){
+                    if(e.button == MouseEvent.BUTTON1) {
+                        if(k == 0){
+                            Pol = NewtonPolynomial(mutableMapOf(functionPainter.plane.xScr2Crt(e.point.x) to functionPainter.plane.yScr2Crt(e.point.y)))
+                            pointPainter.point.put(functionPainter.plane.xScr2Crt(e.point.x), functionPainter.plane.yScr2Crt(e.point.y))
+                            functionPainter.function = Pol::invoke
+                            painters.addAll(mutableListOf(derFunctionPainter))
+                            painters.addAll(mutableListOf(functionPainter))
+                            painters.addAll(mutableListOf(pointPainter))
+                            k = 1
+                        }
+                        else{
+                            var p = true
+                            for(i in 0 until pointPainter.point.size){
+                                if((e.point.x < functionPainter.plane.xCrt2Scr(pointPainter.point.keys.elementAt(i))+20 && e.point.x > functionPainter.plane.xCrt2Scr(pointPainter.point.keys.elementAt(i))-20)) {
+                                    p = false
+                                    break
+                                }
+                            }
+                            if(p){
+                                Pol.add(mutableMapOf(functionPainter.plane.xScr2Crt(e.point.x) to functionPainter.plane.yScr2Crt(e.point.y)))
+                                pointPainter.point.put(functionPainter.plane.xScr2Crt(e.point.x), functionPainter.plane.yScr2Crt(e.point.y))
+                                var poll:Polynomial = Polynomial(Pol.diff())
+                                derFunctionPainter.function = poll::invoke
+                            }
+                        }
+                        mainPanel.repaint()
                     }
-                    painters.addAll(mutableListOf(functionPainter))
-                    functionPainter.add(e.point.x, e.point.y) // Добавляем узел к полиному Ньютон
+                    if(e.button == MouseEvent.BUTTON3){
+                        if(painters.size != 1){
+                            for(i in 0 until pointPainter.point.size){
+                                if((functionPainter.plane.xScr2Crt(e.point.x)+0.1 >pointPainter.point.keys.elementAt(i) && functionPainter.plane.xScr2Crt(e.point.x)-0.1 < pointPainter.point.keys.elementAt(i))
+                                    && (functionPainter.plane.yScr2Crt(e.point.y)+0.1 >pointPainter.point.values.elementAt(i) && functionPainter.plane.yScr2Crt(e.point.y)-0.1 < pointPainter.point.values.elementAt(i))){
+                                    if(pointPainter.point.size == 1){
+                                        painters.remove(pointPainter)
+                                        painters.remove(functionPainter)
+                                        painters.remove(derFunctionPainter)
+                                    }
+                                    pointPainter.point.remove(pointPainter.point.keys.elementAt(i))
+                                    break
+                                }
+                            }
+                            if(pointPainter.point.size == 0){
+                                Pol.index.clear()
+                                Pol.coeff = Polynomial().coeff
+                                var poll:Polynomial = Polynomial()
+                                derFunctionPainter.function = poll::invoke
+                                functionPainter.function = Pol::invoke
+                                k = 0
+                            }
+                            if(pointPainter.point.size != 0){
+                                var pol1 = NewtonPolynomial(pointPainter.point)
+                                Pol = pol1
+                                var poll:Polynomial = Polynomial(Pol.diff())
+                                derFunctionPainter.function = poll::invoke
+                                functionPainter.function = Pol::invoke
+                            }
+                        }
+                        mainPanel.repaint()
+                    }
                 }
-                if (e?.button == MouseEvent.BUTTON3) { // Если нажата правая кнопка мыши
-                    if(functionPainter.m.size == 1){
-                        painters.removeAt(painters.size-1)
-                    }
-                    else{
-                        functionPainter.deletePoint(e.point.x,e.point.y)
-                    }
-                }
-                mainPanel.repaint() // перерисовываем панель
             }
         })
+
+        if (checkboxPoint.isSelected){
+            painters.addAll(mutableListOf(pointPainter))
+            mainPanel.repaint()
+        }
+        else{
+            painters.remove(pointPainter)
+            mainPanel.repaint()
+        }
 
         mainPlane.pixelSize=mainPanel.size
         mainPanel.addComponentListener(object:ComponentAdapter(){
@@ -154,16 +220,15 @@ class MainFrame  : JFrame() {
             background= Color.BLUE
         }
         colorpanelDerivative= JPanel().apply {
-            background= Color.BLUE
+            background= Color.GREEN
         }
 
         colorpanelPoint.addMouseListener(object : MouseAdapter(){
             override fun mouseClicked(e: MouseEvent?) {
                 e?.let {
-                    val colorpanelPoint = it.source as JPanel
                     val color1 = JColorChooser.showDialog(null, "Выберите цвет", colorpanelPoint.background)
                     colorpanelPoint.background=color1
-                    functionPainter.setPointColor(color1)
+                    pointPainter.pointColor=color1
                     mainPanel.repaint()
                 }
             }
@@ -172,10 +237,9 @@ class MainFrame  : JFrame() {
         colorpanelGraphic.addMouseListener(object : MouseAdapter(){
             override fun mouseClicked(e: MouseEvent?) {
                 e?.let {
-                    val colorpanelGraphic= it.source as JPanel
                     val color2 = JColorChooser.showDialog(null, "Выберите цвет", colorpanelGraphic.background)
                     colorpanelGraphic.background=color2
-                    functionPainter.setFunColor(color2)
+                    functionPainter.funColor=color2
                     mainPanel.repaint()
                 }
             }
@@ -184,10 +248,9 @@ class MainFrame  : JFrame() {
         colorpanelDerivative.addMouseListener(object : MouseAdapter(){
             override fun mouseClicked(e: MouseEvent?) {
                 e?.let {
-                    val colorpanelDerivative= it.source as JPanel
                     val color3 = JColorChooser.showDialog(null, "Выберите цвет", colorpanelDerivative.background)
                     colorpanelDerivative.background=color3
-                    derFunctionPainter.setDifColor(color3)
+                    derFunctionPainter.funColor=color3
                     mainPanel.repaint()
                 }
             }
