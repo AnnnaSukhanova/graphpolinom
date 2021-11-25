@@ -2,9 +2,11 @@ package ru.annnn.ui.polinom
 
 class NewtonPolynomial( private val points: MutableMap<Double,Double>): Polynomial(){
 
-        var index : MutableMap<Double,Double> = mutableMapOf()
-        var l = Polynomial(1.0) //сохраняем полином чтобы при добавлении точки заново не пересчитывать все значения
+        var index : MutableMap<Double,Double> = mutableMapOf() //карта, ключ, значение
+        var l = Polynomial(1.0) //сохраняем полином  x-xi чтобы при добавлении точки заново не пересчитывать все значения
+
         init{
+
             for(i in 0 until points.size){
                 index[points.keys.elementAt(i)] = points.values.elementAt(i) //записываем точки, которые передали чтобы потом с ними работать
             }

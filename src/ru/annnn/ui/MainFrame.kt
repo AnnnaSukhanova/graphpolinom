@@ -124,7 +124,7 @@ class MainFrame  : JFrame() {
                                     break
                                 }
                             }
-                            if(pointPainter.point.size == 0){
+                            if(pointPainter.point.isEmpty()){
                                 Polinom.index.clear()
                                 Polinom.coeff = Polynomial().coeff
                                 var poll:Polynomial = Polynomial()
@@ -132,7 +132,7 @@ class MainFrame  : JFrame() {
                                 functionPainter.function = Polinom::invoke
                                 k = 0
                             }
-                            if(pointPainter.point.size != 0){
+                            if(pointPainter.point.isNotEmpty()){
                                 var pol1 = NewtonPolynomial(pointPainter.point)
                                 Polinom = pol1
                                 var poll:Polynomial = Polynomial(Polinom.diff())
@@ -164,7 +164,7 @@ class MainFrame  : JFrame() {
             if(k == 1) painters.addAll(mutableListOf(functionPainter))
             mainPanel.repaint()
         }
-        checkboxGraphics.addItemListener { if (!checkboxPoint.isSelected) deletePolynom() else showPolynom() }
+        checkboxGraphics.addItemListener { if (!checkboxGraphics.isSelected) deletePolynom() else showPolynom() }
 
         fun deleteDerivative(){
             if(k == 1) painters.remove(derFunctionPainter)
@@ -174,7 +174,7 @@ class MainFrame  : JFrame() {
             if(k == 1) painters.addAll(mutableListOf(derFunctionPainter))
             mainPanel.repaint()
         }
-        checkboxDerivative.addItemListener { if (!checkboxPoint.isSelected) deleteDerivative() else showDerivative() }
+        checkboxDerivative.addItemListener { if (!checkboxDerivative.isSelected) deleteDerivative() else showDerivative() }
 
         mainPlane.pixelSize=mainPanel.size
         mainPanel.addComponentListener(object:ComponentAdapter(){
