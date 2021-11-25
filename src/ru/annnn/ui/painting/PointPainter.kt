@@ -3,7 +3,7 @@ package ru.annnn.ui.painting
 import java.awt.*
 import Plane
 
-class PointPainter(public val plane: Plane) : Painter {
+class PointPainter(private val plane: Plane) : Painter {
 
     var pointColor: Color = Color.RED
     var point = mutableMapOf<Double,Double>()
@@ -21,8 +21,8 @@ class PointPainter(public val plane: Plane) : Painter {
             )
             setRenderingHints(rh)
             with(plane) {
-                for(i in 0..point.size-1){
-                    fillOval(xCrt2Scr( point.keys.elementAt(i))-radius,plane.yCrt2Scr(point.values.elementAt(i))-radius,radius*2,radius*2)
+                for(i in 0 until point.size){
+                    fillOval(xCrt2Scr(point.keys.elementAt(i))-radius,plane.yCrt2Scr(point.values.elementAt(i))-radius,radius*2,radius*2)
                 }
             }
         }
