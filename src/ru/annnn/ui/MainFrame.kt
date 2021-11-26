@@ -90,6 +90,7 @@ class MainFrame  : JFrame() {
                             functionPainter.function = Polynom::invoke
                             var poll:Polynomial = Polynomial(Polynom.diff())
                             derFunctionPainter.function = poll::invoke //считаем полином в точке
+//                            painters.addAll(mutableListOf(pointPainter))
                             painters.addAll(mutableListOf(derFunctionPainter))
                             painters.addAll(mutableListOf(functionPainter))
                             painters.addAll(mutableListOf(pointPainter))
@@ -115,8 +116,8 @@ class MainFrame  : JFrame() {
                     if(e.button == MouseEvent.BUTTON3){
                         if(painters.size != 1){ //если есть что то кроме координат
                             for(i in 0 until pointPainter.point.size){ //проходимся по всем точкам
-                                if((functionPainter.plane.xScr2Crt(e.point.x)+0.1 >pointPainter.point.keys.elementAt(i) && functionPainter.plane.xScr2Crt(e.point.x)-0.1 < pointPainter.point.keys.elementAt(i))
-                                    && (functionPainter.plane.yScr2Crt(e.point.y)+0.1 >pointPainter.point.values.elementAt(i) && functionPainter.plane.yScr2Crt(e.point.y)-0.1 < pointPainter.point.values.elementAt(i))){
+                                if((functionPainter.plane.xScr2Crt(e.point.x)+0.1 >pointPainter.point.keys.elementAt(i) || functionPainter.plane.xScr2Crt(e.point.x)-0.1 < pointPainter.point.keys.elementAt(i))
+                                    || (functionPainter.plane.yScr2Crt(e.point.y)+0.1 >pointPainter.point.values.elementAt(i) || functionPainter.plane.yScr2Crt(e.point.y)-0.1 < pointPainter.point.values.elementAt(i))){
                                     if(pointPainter.point.size == 1){
                                         painters.remove(pointPainter)
                                         painters.remove(functionPainter)
@@ -159,10 +160,14 @@ class MainFrame  : JFrame() {
             mainPanel.repaint()
         }
         fun showPolynom(){
-            if(k == 1) painters.addAll(mutableListOf(functionPainter))
+            if(k == 1) {
+                painters.addAll(mutableListOf(functionPainter))
+                painters.remove(pointPainter)
+                painters.addAll(mutableListOf(pointPainter))
+            }
             mainPanel.repaint()
         }
-        checkboxGraphics.addItemListener { if (!checkboxGraphics.isSelected) deletePolynom() else showPolynom() }
+        checkboxGraphics.addItemListener { if (checkboxGraphics.isSelected) showPolynom() else deletePolynom() }
 
         fun deleteDerivative(){
             if(k == 1) painters.remove(derFunctionPainter)
@@ -173,6 +178,9 @@ class MainFrame  : JFrame() {
             mainPanel.repaint()
         }
         checkboxDerivative.addItemListener { if (!checkboxDerivative.isSelected) deleteDerivative() else showDerivative() }
+
+
+
 
         mainPlane.pixelSize=mainPanel.size
         mainPanel.addComponentListener(object:ComponentAdapter(){
