@@ -5,7 +5,7 @@ import Plane
 
 class PointPainter(private val plane: Plane) : Painter {
 
-    var pointColor: Color = Color.RED
+    var pointColor: Color = Color.ORANGE
     var point = mutableMapOf<Double,Double>()
 
     override fun paint(g: Graphics){

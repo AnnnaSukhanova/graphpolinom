@@ -6,7 +6,7 @@ open class FunctionPainter(
     val plane: Plane,
     ) : Painter {
 
-    var funColor: Color = Color.BLUE
+    var funColor: Color = Color.DARK_GRAY
     lateinit var function: (Double)->Double
 
     override fun paint(g: Graphics){

@@ -67,7 +67,7 @@ class MainFrame  : JFrame() {
         var pointPainter= PointPainter(mainPlane)
         val painters = mutableListOf<Painter>(cartesianPainter)
         derFunctionPainter.funColor = Color.GREEN
-        lateinit var Polinom:NewtonPolynomial
+        lateinit var Polynom:NewtonPolynomial
         mainPanel=GraphicsPanel(painters).apply {
             background=Color.WHITE
         }
@@ -84,10 +84,12 @@ class MainFrame  : JFrame() {
             {
                 if(e?.point != null){
                     if(e.button == MouseEvent.BUTTON1) {
-                        if(k == 0){
-                            Polinom = NewtonPolynomial(mutableMapOf(functionPainter.plane.xScr2Crt(e.point.x) to functionPainter.plane.yScr2Crt(e.point.y)))
+                        if(k == 0){ //если еще ничего не было нарисовано
+                            Polynom = NewtonPolynomial(mutableMapOf(functionPainter.plane.xScr2Crt(e.point.x) to functionPainter.plane.yScr2Crt(e.point.y)))
                             pointPainter.point[functionPainter.plane.xScr2Crt(e.point.x)] = functionPainter.plane.yScr2Crt(e.point.y)
-                            functionPainter.function = Polinom::invoke
+                            functionPainter.function = Polynom::invoke
+                            var poll:Polynomial = Polynomial(Polynom.diff())
+                            derFunctionPainter.function = poll::invoke //считаем полином в точке
                             painters.addAll(mutableListOf(derFunctionPainter))
                             painters.addAll(mutableListOf(functionPainter))
                             painters.addAll(mutableListOf(pointPainter))
@@ -95,24 +97,24 @@ class MainFrame  : JFrame() {
                         }
                         else{
                             var p = true
-                            for(i in 0 until pointPainter.point.size){
+                            for(i in 0 until pointPainter.point.size){ //проверим куда нажали
                                 if((e.point.x < functionPainter.plane.xCrt2Scr(pointPainter.point.keys.elementAt(i))+12 && e.point.x > functionPainter.plane.xCrt2Scr(pointPainter.point.keys.elementAt(i))-12)) {
                                     p = false
                                     break
                                 }
                             }
-                            if(p){
-                                Polinom.add(mutableMapOf(functionPainter.plane.xScr2Crt(e.point.x) to functionPainter.plane.yScr2Crt(e.point.y)))
+                            if(p){ //если тыкаем не по уже нарисованной точке
+                                Polynom.add(mutableMapOf(functionPainter.plane.xScr2Crt(e.point.x) to functionPainter.plane.yScr2Crt(e.point.y)))
                                 pointPainter.point[functionPainter.plane.xScr2Crt(e.point.x)] = functionPainter.plane.yScr2Crt(e.point.y)
-                                var poll:Polynomial = Polynomial(Polinom.diff())
+                                var poll:Polynomial = Polynomial(Polynom.diff()) //чтобы производная тоже строилась
                                 derFunctionPainter.function = poll::invoke //считаем полином в точке
                             }
                         }
                         mainPanel.repaint()
                     }
                     if(e.button == MouseEvent.BUTTON3){
-                        if(painters.size != 1){
-                            for(i in 0 until pointPainter.point.size){
+                        if(painters.size != 1){ //если есть что то кроме координат
+                            for(i in 0 until pointPainter.point.size){ //проходимся по всем точкам
                                 if((functionPainter.plane.xScr2Crt(e.point.x)+0.1 >pointPainter.point.keys.elementAt(i) && functionPainter.plane.xScr2Crt(e.point.x)-0.1 < pointPainter.point.keys.elementAt(i))
                                     && (functionPainter.plane.yScr2Crt(e.point.y)+0.1 >pointPainter.point.values.elementAt(i) && functionPainter.plane.yScr2Crt(e.point.y)-0.1 < pointPainter.point.values.elementAt(i))){
                                     if(pointPainter.point.size == 1){
@@ -125,19 +127,15 @@ class MainFrame  : JFrame() {
                                 }
                             }
                             if(pointPainter.point.isEmpty()){
-                                Polinom.index.clear()
-                                Polinom.coeff = Polynomial().coeff
-                                var poll:Polynomial = Polynomial()
-                                derFunctionPainter.function = poll::invoke
-                                functionPainter.function = Polinom::invoke
+                                Polynom.index.clear()
                                 k = 0
                             }
                             if(pointPainter.point.isNotEmpty()){
                                 var pol1 = NewtonPolynomial(pointPainter.point)
-                                Polinom = pol1
-                                var poll:Polynomial = Polynomial(Polinom.diff())
+                                Polynom = pol1
+                                var poll:Polynomial = Polynomial(Polynom.diff())
                                 derFunctionPainter.function = poll::invoke
-                                functionPainter.function = Polinom::invoke
+                                functionPainter.function = Polynom::invoke
                             }
                         }
                         mainPanel.repaint()
@@ -235,10 +233,10 @@ class MainFrame  : JFrame() {
         }
 
         colorpanelPoint= JPanel().apply {
-            background= Color.RED
+            background= Color.ORANGE
         }
         colorpanelGraphic= JPanel().apply {
-            background= Color.BLUE
+            background= Color.DARK_GRAY
         }
         colorpanelDerivative= JPanel().apply {
             background= Color.GREEN
