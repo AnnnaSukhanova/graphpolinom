@@ -162,12 +162,21 @@ class MainFrame  : JFrame() {
         fun showPolynom(){
             if(k == 1) {
                 painters.addAll(mutableListOf(functionPainter))
+            }
+            mainPanel.repaint()
+        }
+        fun showPP(){
+            if(k == 1) {
+                painters.addAll(mutableListOf(functionPainter))
                 painters.remove(pointPainter)
                 painters.addAll(mutableListOf(pointPainter))
             }
             mainPanel.repaint()
         }
-        checkboxGraphics.addItemListener { if (checkboxGraphics.isSelected) showPolynom() else deletePolynom() }
+        checkboxGraphics.addItemListener {
+            if (checkboxGraphics.isSelected&&checkboxPoint.isSelected) showPP()
+            else if (checkboxGraphics.isSelected) showPolynom()
+            else deletePolynom() }
 
         fun deleteDerivative(){
             if(k == 1) painters.remove(derFunctionPainter)
