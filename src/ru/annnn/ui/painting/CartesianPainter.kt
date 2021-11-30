@@ -64,7 +64,8 @@ class CartesianPainter(private val plane: Plane) : Painter {
                xMax - xMin < 11 -> { 10.0 }
                xMax - xMin < 25 -> { 5.0 }
                xMax - xMin < 50-> { 2.5 }
-                else -> { 1.25 } }
+               xMax - xMin < 120 && width < 1000 -> { 1.25  }
+                else -> { 0.625} }
                 for (i in (xMin*kX).toInt() .. (xMax*kX).toInt()) {//штрихи на оси х
                     val gap = if (i % 10 == 0) 10 else if (i % 5 == 0) 6 else 2 //длина штриха для каждой 10, 5 и прочих черточек
                     val x = xCrt2Scr(i / kX) //частота штриха
@@ -77,10 +78,11 @@ class CartesianPainter(private val plane: Plane) : Painter {
                val kY = when {
                    yMax - yMin < 1 -> { 50.0 }
                    yMax - yMin < 6 -> { 20.0 }
-                yMax - yMin < 11 -> { 10.0 }
-                yMax - yMin < 25 -> { 5.0 }
-                yMax - yMin < 50 -> { 2.5 }
-                else -> { 1.25 } }
+                   yMax - yMin < 11 -> { 10.0 }
+                   yMax - yMin < 25 -> { 5.0 }
+                   yMax - yMin < 50 -> { 2.5 }
+                   yMax - yMin < 120 && height < 1000 -> { 1.25 }
+                   else -> { 0.625 } }
                 for (i in (yMin*kY).toInt() .. (yMax*kY).toInt()){//штрихи на у //не включая = антил
                     val gap = if (i % 10 == 0) 10 else if (i % 5 == 0) 6 else 2
                     val y = yCrt2Scr(i / kY)
@@ -97,9 +99,9 @@ class CartesianPainter(private val plane: Plane) : Painter {
    private fun paintNumbers(g:Graphics) {
         with(plane) {
             (g as Graphics2D).apply {
-                stroke = BasicStroke(1.5F)
+                stroke = BasicStroke(1F)
                 color= Color.darkGray
-                font = mainFont
+                font = Font("Cambria", Font.BOLD, 10)
 
                 var x0 = xCrt2Scr(0.0)
                 var y0 = yCrt2Scr(0.0)
@@ -123,12 +125,21 @@ class CartesianPainter(private val plane: Plane) : Painter {
                     y1=0 }
 
                 val kX = when {
-                    xMax - xMin < 1 -> { 50.0 }
-                    xMax - xMin < 6 -> { 20.0 }
-                    xMax - xMin < 11 -> { 10.0 }
-                    xMax - xMin < 25 -> { 5.0 }
-                    xMax - xMin < 50-> { 2.5 }
-                    else -> { 1.25 }
+                    xMax - xMin < 2 && width > 1000 -> { 50.0 }
+                    xMax - xMin < 6 && width > 1000 -> { 20.0 }
+                    xMax - xMin < 11 && width > 1000 -> { 10.0 }
+                    xMax - xMin < 25 && width > 1000  -> { 5.0 }
+                    xMax - xMin < 50 && width > 1000  -> { 2.5 }
+                    xMax - xMin < 160 && width > 1000  -> { 1.25 }
+                    xMax - xMin < 1 && width < 1000 -> { 50.0 }
+                    xMax - xMin < 3 && width < 1000 -> { 20.0 }
+                    xMax - xMin < 11 && width < 1000 -> { 10.0 }
+                    xMax - xMin < 19 && width < 1000  -> { 5.0 }
+                    xMax - xMin < 35 && width < 1000 -> { 2.5 }
+                    xMax - xMin < 50 && width < 1000 -> { 1.25 }
+                    xMax - xMin < 130 && width < 1000 -> { 0.625 }
+                    xMax - xMin >= 130 && width < 1000 -> { 0.3125 }
+                    else -> { 0.625}
                 }
                 for (i in ((xMin+0.05) * kX).toInt() until (xMax * kX).toInt()) {
                     if (i % 5 != 0 || i == 0) continue
@@ -148,11 +159,17 @@ class CartesianPainter(private val plane: Plane) : Painter {
                 }
 
                 val kY = when {
-                    yMax - yMin < 1 -> { 50.0 }
-                    yMax - yMin < 3 -> { 20.0 }
-                    yMax - yMin < 11 -> { 10.0 }
-                    yMax - yMin < 25 -> { 5.0 }
-                    yMax - yMin < 50-> { 2.5 }
+                    yMax - yMin < 1 && height > 1000 -> { 50.0 }
+                    yMax - yMin < 3 && height > 1000-> { 20.0 }
+                    yMax - yMin < 25 && height > 1000-> { 10.0 }
+                    yMax - yMin < 40 && height >1000-> { 5.0 }
+                    yMax - yMin < 50 && height > 1000-> { 2.5 }
+                    yMax - yMin < 1 && height < 1000 -> { 50.0 }
+                    yMax - yMin < 3 && height <  1000-> { 20.0 }
+                    yMax - yMin < 11 && height <  1000-> { 10.0 }
+                    yMax - yMin < 25 && height < 1000-> { 5.0 }
+                    yMax - yMin < 50 && height <  1000-> { 2.5 }
+                    yMax - yMin > 130 && height <  1000-> { 0.625 }
                     else -> { 1.25 }
                 }
                 for (i in ((yMin+0.05) * kY).toInt() until (yMax * kY).toInt()) {
