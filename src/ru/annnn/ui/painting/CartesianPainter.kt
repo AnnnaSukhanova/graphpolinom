@@ -6,7 +6,7 @@ class CartesianPainter(private val plane: Plane) : Painter {
 
      var xColor: Color= Color.BLUE
      var yColor: Color= Color.RED
-     var mainFont: Font= Font ("Cambria", Font.BOLD, 14)
+     var mainFont: Font= Font ("Cambria", Font.BOLD, 10)
     override fun paint(g:Graphics){
         paintAxes(g)
         paintTix(g)
@@ -101,7 +101,7 @@ class CartesianPainter(private val plane: Plane) : Painter {
             (g as Graphics2D).apply {
                 stroke = BasicStroke(1F)
                 color= Color.darkGray
-                font = Font("Cambria", Font.BOLD, 10)
+                font = mainFont
 
                 var x0 = xCrt2Scr(0.0)
                 var y0 = yCrt2Scr(0.0)

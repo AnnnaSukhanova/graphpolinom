@@ -22,7 +22,6 @@ class MainFrame  : JFrame() {
 
     private val mainPanel: GraphicsPanel
     private val controlPanel: JPanel
-
     private val xMinM: SpinnerNumberModel
     private val yMinM: SpinnerNumberModel
     private val xMaxM: SpinnerNumberModel
@@ -258,6 +257,7 @@ class MainFrame  : JFrame() {
         colorpanelDerivative= JPanel().apply {
             background= Color.GREEN
         }
+
 
         colorpanelPoint.addMouseListener(object : MouseAdapter(){
             override fun mouseClicked(e: MouseEvent?) {
