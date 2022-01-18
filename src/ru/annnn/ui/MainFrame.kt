@@ -1,6 +1,6 @@
 package ru.annnn.ui
 import ru.annnn.ui.painting.CartesianPainter
-import ru.annnn.ui.painting.PointsPainter
+import ru.annnn.ui.painting.Painter
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
@@ -9,8 +9,12 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 import Plane
-import ru.annnn.ui.painting.FunctionPainter
 import ru.annnn.ui.polinom.NewtonPolynomial
+import ru.annnn.ui.polinom.Polynomial
+import ru.annnn.ui.painting.FunctionPainter
+import ru.annnn.ui.painting.PointPainter
+import java.awt.event.ItemListener
+
 
 class MainFrame  : JFrame() {
 
@@ -18,7 +22,6 @@ class MainFrame  : JFrame() {
 
     private val mainPanel: GraphicsPanel
     private val controlPanel: JPanel
-
     private val xMinM: SpinnerNumberModel
     private val yMinM: SpinnerNumberModel
     private val xMaxM: SpinnerNumberModel
@@ -56,54 +59,136 @@ class MainFrame  : JFrame() {
         yMax= JSpinner(yMaxM)
 
         val mainPlane= Plane(xMinM.value as Double,yMinM.value as Double,xMaxM.value as Double,yMaxM.value as Double)
-        val pointsPainter = PointsPainter( mainPlane, 6)
-        val cartesianPainter= CartesianPainter(mainPlane)
-        var polynomial = NewtonPolynomial() // Полином Ньютона
-        val functionPainter = FunctionPainter(mainPlane) // Объект для отрисоки полиномов
-        val derFunctionPainter = FunctionPainter(mainPlane)
-        val painters= mutableListOf(cartesianPainter,functionPainter,pointsPainter, derFunctionPainter )
+        var k = 0
+        val cartesianPainter = CartesianPainter(mainPlane)
+        var functionPainter = FunctionPainter(mainPlane)
+        var derFunctionPainter = FunctionPainter(mainPlane)
+        var pointPainter= PointPainter(mainPlane)
+        val painters = mutableListOf<Painter>(cartesianPainter)
+        derFunctionPainter.funColor = Color.GREEN
+        lateinit var Polynom:NewtonPolynomial
         mainPanel=GraphicsPanel(painters).apply {
             background=Color.WHITE
         }
 
         checkboxPoint= JCheckBox()
+        checkboxPoint.isSelected = true
         checkboxGraphics= JCheckBox()
+        checkboxGraphics.isSelected = true
         checkboxDerivative= JCheckBox()
-//
-//        checkboxPoint.addMouseListener(object : MouseAdapter(){
-//            override fun mouseClicked(e: MouseEvent?) {
-//                e?.let {
-//                    if (checkboxPoint.isSelected){
-//                        painters.add(pointsPainter)
-//                    }
-//                    else {
-//                        painters.remove(pointsPainter)
-//                    }
-//                } }  })
+        checkboxDerivative.isSelected = true
 
         mainPanel.addMouseListener(object : MouseAdapter(){
-            override fun mouseClicked(e: MouseEvent?) {
-                super.mouseClicked(e)
-                if (e?.button == MouseEvent.BUTTON1) { // Если нажата левая кнопка мыши
-                        pointsPainter.addPoint(e?.x, e?.y) // Добавляем точку
-                        derFunctionPainter.removeAll()
-                        polynomial.addNode(mainPlane.xScr2Crt(e?.x), // Добавляем узел к полиному Ньютона
-                            mainPlane.yScr2Crt(e?.y))
-                        derFunctionPainter.addPolynomial(polynomial.derivative())
+            override fun mouseClicked(e: MouseEvent?)
+            {
+                if(e?.point != null){
+                    if(e.button == MouseEvent.BUTTON1) {
+                        if(k == 0){ //если еще ничего не было нарисовано
+                            Polynom = NewtonPolynomial(mutableMapOf(functionPainter.plane.xScr2Crt(e.point.x) to functionPainter.plane.yScr2Crt(e.point.y)))
+                            pointPainter.point[functionPainter.plane.xScr2Crt(e.point.x)] = functionPainter.plane.yScr2Crt(e.point.y)
+                            functionPainter.function = Polynom::invoke
+                            var poll:Polynomial = Polynomial(Polynom.diff())
+                            derFunctionPainter.function = poll::invoke //считаем полином в точке
+//                            painters.addAll(mutableListOf(pointPainter))
+                            painters.addAll(mutableListOf(derFunctionPainter))
+                            painters.addAll(mutableListOf(functionPainter))
+                            painters.addAll(mutableListOf(pointPainter))
+                            k = 1
+                        }
+                        else{
+                            var p = true
+                            for(i in 0 until pointPainter.point.size){ //проверим куда нажали
+                                if((e.point.x < functionPainter.plane.xCrt2Scr(pointPainter.point.keys.elementAt(i))+12 && e.point.x > functionPainter.plane.xCrt2Scr(pointPainter.point.keys.elementAt(i))-12)) {
+                                    p = false
+                                    break
+                                }
+                            }
+                            if(p){ //если тыкаем не по уже нарисованной точке
+                                Polynom.add(mutableMapOf(functionPainter.plane.xScr2Crt(e.point.x) to functionPainter.plane.yScr2Crt(e.point.y)))
+                                pointPainter.point[functionPainter.plane.xScr2Crt(e.point.x)] = functionPainter.plane.yScr2Crt(e.point.y)
+                                var poll:Polynomial = Polynomial(Polynom.diff()) //чтобы производная тоже строилась
+                                derFunctionPainter.function = poll::invoke //считаем полином в точке
+                            }
+                        }
+                        mainPanel.repaint()
+                    }
+                    if(e.button == MouseEvent.BUTTON3){
+                        if(painters.size != 1){ //если есть что то кроме координат
+                            for(i in 0 until pointPainter.point.size){ //проходимся по всем точкам
+                                if((functionPainter.plane.xScr2Crt(e.point.x)+0.1 >pointPainter.point.keys.elementAt(i) || functionPainter.plane.xScr2Crt(e.point.x)-0.1 < pointPainter.point.keys.elementAt(i))
+                                    || (functionPainter.plane.yScr2Crt(e.point.y)+0.1 >pointPainter.point.values.elementAt(i) || functionPainter.plane.yScr2Crt(e.point.y)-0.1 < pointPainter.point.values.elementAt(i))){
+                                    if(pointPainter.point.size == 1){
+                                        painters.remove(pointPainter)
+                                        painters.remove(functionPainter)
+                                        painters.remove(derFunctionPainter)
+                                    }
+                                    pointPainter.point.remove(pointPainter.point.keys.elementAt(i))
+                                    break
+                                }
+                            }
+                            if(pointPainter.point.isEmpty()){
+                                Polynom.index.clear()
+                                k = 0
+                            }
+                            if(pointPainter.point.isNotEmpty()){
+                                var pol1 = NewtonPolynomial(pointPainter.point)
+                                Polynom = pol1
+                                var poll:Polynomial = Polynomial(Polynom.diff())
+                                derFunctionPainter.function = poll::invoke
+                                functionPainter.function = Polynom::invoke
+                            }
+                        }
+                        mainPanel.repaint()
+                    }
                 }
-                if (e?.button == MouseEvent.BUTTON3) { // Если нажата правая кнопка мыши
-                        pointsPainter.deletePoint(e?.x, e?.y) // Удаляем узел
-                        functionPainter.removePolynomial(polynomial)// Удаляем полином из отрисовщика полиномов
-                        val newPoints = pointsPainter.getPoints() // Получаем оставшиеся точки
-                        polynomial = NewtonPolynomial(arrayListOf()) // Создаем новый полином
-                        newPoints.forEach { p -> polynomial.addNode(p.x, p.y) } // Добавляем оставшиеся точки как узлы полинома
-                        functionPainter.addPolynomial(polynomial) // Добавляем полином на отрисовку
-                        derFunctionPainter.removeAll()
-                        derFunctionPainter.addPolynomial(polynomial.derivative())
-                }
-                mainPanel.repaint() // перерисовываем панель
             }
         })
+
+        fun deletePoints(){
+            if(k == 1) painters.remove(pointPainter)
+            mainPanel.repaint()
+        }
+        fun showPoints(){
+            if(k == 1) painters.addAll(mutableListOf(pointPainter))
+            mainPanel.repaint()
+        }
+        checkboxPoint.addItemListener { if (!checkboxPoint.isSelected) deletePoints() else showPoints() }
+
+        fun deletePolynom(){
+            if(k == 1) painters.remove(functionPainter)
+            mainPanel.repaint()
+        }
+        fun showPolynom(){
+            if(k == 1) {
+                painters.addAll(mutableListOf(functionPainter))
+            }
+            mainPanel.repaint()
+        }
+        fun showPP(){
+            if(k == 1) {
+                painters.addAll(mutableListOf(functionPainter))
+                painters.remove(pointPainter)
+                painters.addAll(mutableListOf(pointPainter))
+            }
+            mainPanel.repaint()
+        }
+        checkboxGraphics.addItemListener {
+            if (checkboxGraphics.isSelected&&checkboxPoint.isSelected) showPP()
+            else if (checkboxGraphics.isSelected) showPolynom()
+            else deletePolynom() }
+
+        fun deleteDerivative(){
+            if(k == 1) painters.remove(derFunctionPainter)
+            mainPanel.repaint()
+        }
+        fun showDerivative(){
+            if(k == 1) painters.addAll(mutableListOf(derFunctionPainter))
+            mainPanel.repaint()
+        }
+        checkboxDerivative.addItemListener { if (!checkboxDerivative.isSelected) deleteDerivative() else showDerivative() }
+
+
+
 
         mainPlane.pixelSize=mainPanel.size
         mainPanel.addComponentListener(object:ComponentAdapter(){
@@ -164,22 +249,22 @@ class MainFrame  : JFrame() {
         }
 
         colorpanelPoint= JPanel().apply {
-            background= Color.RED
+            background= Color.ORANGE
         }
         colorpanelGraphic= JPanel().apply {
-            background= Color.BLUE
+            background= Color.DARK_GRAY
         }
         colorpanelDerivative= JPanel().apply {
-            background= Color.BLUE
+            background= Color.GREEN
         }
+
 
         colorpanelPoint.addMouseListener(object : MouseAdapter(){
             override fun mouseClicked(e: MouseEvent?) {
                 e?.let {
-                    val colorpanelPoint = it.source as JPanel
                     val color1 = JColorChooser.showDialog(null, "Выберите цвет", colorpanelPoint.background)
                     colorpanelPoint.background=color1
-                    pointsPainter.setColor(color1)
+                    pointPainter.pointColor=color1
                     mainPanel.repaint()
                 }
             }
@@ -188,10 +273,9 @@ class MainFrame  : JFrame() {
         colorpanelGraphic.addMouseListener(object : MouseAdapter(){
             override fun mouseClicked(e: MouseEvent?) {
                 e?.let {
-                    val colorpanelGraphic= it.source as JPanel
                     val color2 = JColorChooser.showDialog(null, "Выберите цвет", colorpanelGraphic.background)
                     colorpanelGraphic.background=color2
-                    functionPainter.setColor(color2)
+                    functionPainter.funColor=color2
                     mainPanel.repaint()
                 }
             }
@@ -200,10 +284,9 @@ class MainFrame  : JFrame() {
         colorpanelDerivative.addMouseListener(object : MouseAdapter(){
             override fun mouseClicked(e: MouseEvent?) {
                 e?.let {
-                    val colorpanelDerivative= it.source as JPanel
                     val color3 = JColorChooser.showDialog(null, "Выберите цвет", colorpanelDerivative.background)
                     colorpanelDerivative.background=color3
-                    derFunctionPainter.setColor(color3)
+                    derFunctionPainter.funColor=color3
                     mainPanel.repaint()
                 }
             }

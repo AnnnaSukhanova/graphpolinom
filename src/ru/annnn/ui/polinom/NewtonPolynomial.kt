@@ -1,40 +1,49 @@
 package ru.annnn.ui.polinom
 
-class NewtonPolynomial() : Polynomial() {
+class NewtonPolynomial( private val points: MutableMap<Double,Double>): Polynomial(){
 
-    private var points: ArrayList<Pair<Double, Double>> = arrayListOf()//список узлов для полинома
+        var index : MutableMap<Double,Double> = mutableMapOf() //карта, ключ, значение
+        var l = Polynomial(1.0) //сохраняем полином  x-xi чтобы при добавлении точки заново не пересчитывать все значения
 
-    private var divDifferenceData: MutableMap<Pair<Int, Int>, Double> = mutableMapOf() //поле содержащее разделенные разности
+        init{
 
-    constructor(points: ArrayList<Pair<Double, Double>>) : this() { //конструктор создающий полином
-        points.forEach { point -> addNode(point.first, point.second) }
-    }
-
-    private fun divDifference(first: Int, last: Int): Double { //находим разделенную разность
-        return when {
-            // Если такая разделенная разность уже вычислена, возвращаем ее
-            divDifferenceData.containsKey(Pair(first, last)) -> divDifferenceData[Pair(first, last)] ?: error("")
-            else -> {
-                if (last == first) {
-                    // Если начальный и конечный индексы совпадают, то искомое значение - это значение функции в точке соответствующей индексу
-                    divDifferenceData[Pair(first, first)] = points[last].second // Сохраняем вычисленную разделенную разность
-                    return points[last].second // Возвращаем f(x)
-                } // Иначе вычисляем по рекурентной формуле
-                val left = divDifference(first + 1, last)
-                val right = divDifference(first, last - 1)
-                val difference = (left - right) / (points[last].first - points[first].first)
-                divDifferenceData[Pair(first, last)] = difference // Сохраняем вычисленную разделенную разность
-                return difference
+            for(i in 0 until points.size){
+                index[points.keys.elementAt(i)] = points.values.elementAt(i) //записываем точки, которые передали чтобы потом с ними работать
             }
-        }
-    }
+            var pol = Polynomial(points.values.elementAt(0)) // наш полином 0 степени
 
-    fun addNode(x: Double, y: Double) { //добавить узел для интерполирования
-        val base = Polynomial(coef)
-        var p = Polynomial(doubleArrayOf(1.0))
-        points.add(Pair(x, y))
-        for (i in 0 until points.size) if (i != 0) p *= Polynomial(doubleArrayOf(-points[i - 1].first, 1.0))
-        base += p * divDifference(0, points.size - 1)
-        coef = base.coeffitients
-    }
+            for(i in 1 until index.size){ //по формуле ищем суммы
+                l = l * Polynomial(-index.keys.elementAt(i-1),1.0)
+                pol = pol +  l *  DividedDifferent(i) //сам наш полином
+            }
+            coeff = pol.coeff
+        }
+
+        fun DividedDifferent(k:Int) : Double
+        {
+            var f = 0.0
+            for(i in 0..k){
+                var z = 1.0
+                for(j in 0..k){
+                    if(j!=i){
+                        z *=(index.keys.elementAt(i)-index.keys.elementAt(j))
+                    }
+                }
+                f += index.values.elementAt(i)/z
+            }
+            return f
+        }
+
+        fun add(point :MutableMap<Double,Double>){ //передаем точки
+            var pol = Polynomial()
+            pol.coeff = this.coeff
+            for(i in 0 until point.size){
+                index[point.keys.elementAt(i)] = point.values.elementAt(i)
+            }
+            l = l * Polynomial(-index.keys.elementAt(index.size-2),1.0)
+            pol = pol +  l * DividedDifferent(index.size-1)
+            this.coeff = pol.coeff
+        }
+
 }
+

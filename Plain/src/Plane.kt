@@ -8,6 +8,9 @@ class Plane(//добавляем параметры(без размеров па
      yMax:Double
 ) {// панель
 
+    var tMin:Double = -100.0
+    var tMax:Double = 100.0
+
     var pixelSize: Dimension=Dimension(1,1)
         set(size){
             field=Dimension(max(1, size.width), max(1, size.height))
