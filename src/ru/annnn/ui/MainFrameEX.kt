@@ -100,7 +100,7 @@ class MainFrameEX  : JFrame() {
                 mainPanel.repaint()
             }
         }
-        checkboxParametric.addItemListener {//все аа=налогично
+        checkboxParametric.addItemListener {//все аналогично
             if (checkboxParametric.isSelected) {
                 painters.add(parFun)
                 mainPanel.repaint()
