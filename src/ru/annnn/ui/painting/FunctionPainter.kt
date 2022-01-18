@@ -1,6 +1,7 @@
 package ru.annnn.ui.painting
 import Plane
 import java.awt.*
+import java.lang.Double.NaN
 
 open class FunctionPainter(
     val plane: Plane,
@@ -23,15 +24,19 @@ open class FunctionPainter(
             if(::function.isInitialized) {
                 with(plane) {
                     for (i in 0 until width) {
+                        var c=function(xScr2Crt(i))
+                        var d = yCrt2Scr(function(xScr2Crt(i)))
+                        if (c != NaN /*d!=0*/)
+                        {
                         drawLine(
                             i,
                             yCrt2Scr(function(xScr2Crt(i))),
                             i + 1,
                             yCrt2Scr(function(xScr2Crt(i + 1))),
                         )
-                    }
+                        }
                 }
-            }
+            }}
         }
     }
 
